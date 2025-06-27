@@ -39,3 +39,36 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Login error', error: err.message });
   }
 };
+
+
+exports.forgetPassword = async (req, res) => {
+  const { email } = req.body;
+ 
+  try {
+    console.log("hello");
+    // Check if user exists
+    const user = await db('users').where({ email }).first();
+    if (!user) {
+      return res.status(404).json({ message: 'Email not found' });
+    }
+
+    // Generate random 6-digit password
+    const newPasswordPlain = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(newPasswordPlain, 10);
+
+    // Update password in DB
+    await db('users').where({ id: user.id }).update({ password: hashedPassword });
+
+    // Return plain password (normally you'd email this)
+    res.json({
+      message: 'New password generated and updated.',
+      newPassword: newPasswordPlain
+    });
+  } catch (err) {
+    console.log("hii");
+    res.status(500).json({ message: 'Error resetting password', error: err.message });
+  }
+};
+
